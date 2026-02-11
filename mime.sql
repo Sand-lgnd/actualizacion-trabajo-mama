@@ -11,8 +11,8 @@ peso decimal(7,3));
 create table movimiento(
 tipo_mov ENUM('S','E'),
 fecha_mov date,
-id_prod varchar(5) not null, 
+id_prod varchar(7) not null, 
 cantidad int,
-FOREIGN KEY (id_prod) REFERENCES prodcuto(id_prod));
+FOREIGN KEY (id_prod) REFERENCES producto(id_prod));
 
 
