@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext, filedialog
+from tkinter import messagebox, filedialog
+import customtkinter as ctk
 import trabajo_mama as fn_mime
 import re # Para validación de fecha
 from datetime import datetime # Para validación de fecha
@@ -14,43 +15,56 @@ class InventarioApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Gestor de Entradas y Salidas")
-        self.root.geometry("900x700") # Tamaño inicial
+        self.root.geometry("1000x800") # Un poco más grande para el diseño moderno
 
-        # Aplicar un tema de ttk 
-        style = ttk.Style()
-        style.theme_use("vista")
+        # Configurar CustomTkinter
+        ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+        ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
         # --- Menú Superior ---
+        # Nota: ctk no tiene un menú nativo propio, usamos el de tk
         self.crear_menu_superior()
 
         # --- Frames Principales ---
         # Frame para el área principal (entradas y resultados)
-        main_area_frame = ttk.Frame(self.root, padding="10")
-        main_area_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        self.main_area_frame = ctk.CTkFrame(self.root)
+        self.main_area_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH, padx=20, pady=20)
 
         # Frame para entradas de parámetros (arriba en main_area_frame)
-        self.input_frame = ttk.LabelFrame(main_area_frame, text="Parámetros de Consulta")
-        self.input_frame.pack(fill=tk.X, pady=(0,10))
+        self.input_frame = ctk.CTkFrame(self.main_area_frame)
+        self.input_frame.pack(fill=tk.X, pady=(0,20), padx=10)
+
+        # Etiqueta de título para el input_frame para simular LabelFrame
+        self.input_title = ctk.CTkLabel(self.input_frame, text="Parámetros de Consulta", font=ctk.CTkFont(size=16, weight="bold"))
+        self.input_title.pack(pady=(10, 5))
+
+        # Contenedor interno para los controles del input_frame
+        self.input_content = ctk.CTkFrame(self.input_frame, fg_color="transparent")
+        self.input_content.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Frame para resultados (abajo en main_area_frame)
-        marco_resultados = ttk.LabelFrame(main_area_frame, text="Resultados")
-        marco_resultados.pack(expand=True, fill=tk.BOTH)
+        self.marco_resultados = ctk.CTkFrame(self.main_area_frame)
+        self.marco_resultados.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
 
-        self.texto_resultados = scrolledtext.ScrolledText(marco_resultados, wrap=tk.WORD, state=tk.DISABLED, height=10) 
-        self.texto_resultados.pack(expand=True, fill=tk.BOTH, padx=5, pady=5)
+        self.results_title = ctk.CTkLabel(self.marco_resultados, text="Resultados", font=ctk.CTkFont(size=16, weight="bold"))
+        self.results_title.pack(pady=(10, 5))
 
-        boton_limpiar_resultados = ttk.Button(marco_resultados, text="Limpiar Resultados", command=self.limpiar_area_resultados)
-        boton_limpiar_resultados.pack(pady=5)
+        self.texto_resultados = ctk.CTkTextbox(self.marco_resultados, state=tk.DISABLED, height=300)
+        self.texto_resultados.pack(expand=True, fill=tk.BOTH, padx=15, pady=15)
+
+        self.boton_limpiar_resultados = ctk.CTkButton(self.marco_resultados, text="Limpiar Resultados", command=self.limpiar_area_resultados)
+        self.boton_limpiar_resultados.pack(pady=10)
     
     def _clear_input_frame(self):
-        for widget in self.input_frame.winfo_children():
+        # Limpiar solo el contenido, no el título del frame
+        for widget in self.input_content.winfo_children():
             widget.destroy()
 
     def _mostrar_resultados_texto(self, contenido: str):
-        self.texto_resultados.config(state=tk.NORMAL)
-        self.texto_resultados.delete(1.0, tk.END)
+        self.texto_resultados.configure(state=tk.NORMAL)
+        self.texto_resultados.delete("1.0", tk.END)
         self.texto_resultados.insert(tk.END, contenido)
-        self.texto_resultados.config(state=tk.DISABLED)
+        self.texto_resultados.configure(state=tk.DISABLED)
 
     def limpiar_area_resultados(self):
         self._mostrar_resultados_texto("")
@@ -80,23 +94,24 @@ class InventarioApp:
     
     def mostrar_entradas_op1(self): 
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="Tipo de movimiento (E o S):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op1_tipo_mov = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op1_tipo_mov.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Insertar Movimiento Único")
+        ctk.CTkLabel(self.input_content, text="Tipo de movimiento (E o S):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op1_tipo_mov = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op1_tipo_mov.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op1_tipo_mov.bind("<Return>", lambda event: self.ejecutar_op1())
-        ttk.Label(self.input_frame, text="Fecha del movimiento(YYYY-MM-DD):").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op1_fecha_mov = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op1_fecha_mov.grid(row=1, column=1, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="Fecha del movimiento (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op1_fecha_mov = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op1_fecha_mov.grid(row=1, column=1, padx=10, pady=10)
         self.entrada_op1_fecha_mov.bind("<Return>", lambda event: self.ejecutar_op1())
-        ttk.Label(self.input_frame, text="Código del producto:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op1_id_prod = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op1_id_prod.grid(row=2, column=1, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="Código del producto:").grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op1_id_prod = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op1_id_prod.grid(row=2, column=1, padx=10, pady=10)
         self.entrada_op1_id_prod.bind("<Return>", lambda event: self.ejecutar_op1())
-        ttk.Label(self.input_frame, text="Cantidad:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op1_cantidad = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op1_cantidad.grid(row=3, column=1, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="Cantidad:").grid(row=3, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op1_cantidad = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op1_cantidad.grid(row=3, column=1, padx=10, pady=10)
         self.entrada_op1_cantidad.bind("<Return>", lambda event: self.ejecutar_op1())
-        ttk.Button(self.input_frame, text="Consultar", command=self.ejecutar_op1).grid(row=4, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Insertar", command=self.ejecutar_op1).grid(row=4, column=0, columnspan=2, pady=20)
 
     def ejecutar_op1(self):
         tipo_mov= self.entrada_op1_tipo_mov.get()
@@ -117,22 +132,27 @@ class InventarioApp:
 
     def mostrar_entradas_op2(self):
         self._clear_input_frame()
+        self.input_title.configure(text="Consultar Stock por ID")
 
         # Obtener todos los productos para el Combobox
         productos = self._manejar_llamada_bd(fn_mime.obtener_stock_todos_los_productos)
         self.productos_map = {f"{p[1]} (ID: {p[0]})": p[0] for p in productos} if productos else {}
 
-        ttk.Label(self.input_frame, text="Seleccionar Producto:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.combo_productos = ttk.Combobox(self.input_frame, values=list(self.productos_map.keys()), width=40)
-        self.combo_productos.grid(row=0, column=1, padx=5, pady=5)
-        self.combo_productos.bind("<<ComboboxSelected>>", self.seleccionar_producto_combo)
+        ctk.CTkLabel(self.input_content, text="Seleccionar Producto:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.combo_productos = ctk.CTkComboBox(self.input_content, values=list(self.productos_map.keys()), width=300, command=self.seleccionar_producto_combo_ctk)
+        self.combo_productos.grid(row=0, column=1, padx=10, pady=10)
 
-        ttk.Label(self.input_frame, text="O buscar por ID:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op2_id_prod = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op2_id_prod.grid(row=1, column=1, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="O buscar por ID:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op2_id_prod = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op2_id_prod.grid(row=1, column=1, padx=10, pady=10)
         self.entrada_op2_id_prod.bind("<Return>", lambda event: self.ejecutar_op2())
 
-        ttk.Button(self.input_frame, text="Consultar", command=self.ejecutar_op2).grid(row=2, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Consultar", command=self.ejecutar_op2).grid(row=2, column=0, columnspan=2, pady=20)
+
+    def seleccionar_producto_combo_ctk(self, seleccion):
+        if seleccion in self.productos_map:
+            self.entrada_op2_id_prod.delete(0, tk.END)
+            self.entrada_op2_id_prod.insert(0, self.productos_map[seleccion])
 
     def seleccionar_producto_combo(self, event):
         seleccion = self.combo_productos.get()
@@ -161,11 +181,12 @@ class InventarioApp:
 
     def mostrar_entradas_op3(self): 
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="Fecha(YYYY-MM-DD):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op3_fecha = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op3_fecha.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Detalles de Entradas en un Día")
+        ctk.CTkLabel(self.input_content, text="Fecha (YYYY-MM-DD):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op3_fecha = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op3_fecha.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op3_fecha.bind("<Return>", lambda event: self.ejecutar_op3())
-        ttk.Button(self.input_frame, text="Consultar", command=self.ejecutar_op3).grid(row=1, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Consultar", command=self.ejecutar_op3).grid(row=1, column=0, columnspan=2, pady=20)
 
     def ejecutar_op3(self): 
         fecha = self.entrada_op3_fecha.get()
@@ -189,11 +210,12 @@ class InventarioApp:
 
     def mostrar_entradas_op4(self): 
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="Fecha(YYYY-MM-DD):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op4_fecha = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op4_fecha.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Detalles de Salidas en un Día")
+        ctk.CTkLabel(self.input_content, text="Fecha (YYYY-MM-DD):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op4_fecha = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op4_fecha.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op4_fecha.bind("<Return>", lambda event: self.ejecutar_op4())
-        ttk.Button(self.input_frame, text="Consultar", command=self.ejecutar_op4).grid(row=1, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Consultar", command=self.ejecutar_op4).grid(row=1, column=0, columnspan=2, pady=20)
 
     def ejecutar_op4(self): 
         fecha = self.entrada_op4_fecha.get() 
@@ -218,11 +240,12 @@ class InventarioApp:
 
     def mostrar_entradas_op5(self): 
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="ID Producto:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op5_id_prod = ttk.Entry(self.input_frame, width=30) 
-        self.entrada_op5_id_prod.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Peso Total Restante")
+        ctk.CTkLabel(self.input_content, text="ID Producto:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op5_id_prod = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op5_id_prod.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op5_id_prod.bind("<Return>", lambda event: self.ejecutar_op5())
-        ttk.Button(self.input_frame, text="Consultar", command=self.ejecutar_op5).grid(row=1, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Consultar", command=self.ejecutar_op5).grid(row=1, column=0, columnspan=2, pady=20)
 
     def ejecutar_op5(self): 
         id_producto = self.entrada_op5_id_prod.get()
@@ -245,11 +268,12 @@ class InventarioApp:
 
     def mostrar_entradas_op6(self):
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="Fecha (YYYY-MM-DD):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op6_fecha = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op6_fecha.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Todos los Movimientos en un Día")
+        ctk.CTkLabel(self.input_content, text="Fecha (YYYY-MM-DD):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op6_fecha = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op6_fecha.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op6_fecha.bind("<Return>", lambda event: self.ejecutar_op6())
-        ttk.Button(self.input_frame, text="Consultar", command=self.ejecutar_op6).grid(row=1, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Consultar", command=self.ejecutar_op6).grid(row=1, column=0, columnspan=2, pady=20)
 
     def ejecutar_op6(self):
         fecha = self.entrada_op6_fecha.get()
@@ -267,9 +291,82 @@ class InventarioApp:
         self._clear_input_frame() # Limpia el frame de parámetros para mostrar los resultados paginados
         self.mostrar_resultados_paginados(detalles_movimientos, f"Detalles de Movimientos en {fecha}")
 
+    def mostrar_entradas_semana(self, tipo_mov=None):
+        self._clear_input_frame()
+        titulo = "Consulta de Semanal"
+        if tipo_mov == 'E': titulo = "Entradas de la Semana (7 días)"
+        elif tipo_mov == 'S': titulo = "Salidas de la Semana (7 días)"
+
+        self.input_title.configure(text=titulo)
+        self.tipo_mov_semana = tipo_mov
+
+        ctk.CTkLabel(self.input_content, text="Fecha Inicio (YYYY-MM-DD):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_semana_fecha = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_semana_fecha.grid(row=0, column=1, padx=10, pady=10)
+        self.entrada_semana_fecha.bind("<Return>", lambda event: self.ejecutar_semana())
+
+        ctk.CTkButton(self.input_content, text="Consultar Semana", command=self.ejecutar_semana).grid(row=1, column=0, columnspan=2, pady=20)
+
+    def ejecutar_semana(self):
+        fecha = self.entrada_semana_fecha.get()
+        if not fecha:
+            messagebox.showwarning("Entrada Inválida", "Por favor, ingrese una fecha de inicio.")
+            return
+        if not self._validate_date_format(fecha):
+            messagebox.showwarning("Formato Inválido", "El formato de fecha debe ser YYYY-MM-DD.")
+            return
+
+        self.limpiar_area_resultados()
+        resultados = self._manejar_llamada_bd(fn_mime.obtener_detalles_movimientos_rango, fecha, 7, self.tipo_mov_semana)
+
+        self._clear_input_frame()
+        tipo_str = "Movimientos"
+        if self.tipo_mov_semana == 'E': tipo_str = "Entradas"
+        elif self.tipo_mov_semana == 'S': tipo_str = "Salidas"
+
+        self.mostrar_resultados_paginados(resultados, f"{tipo_str} desde {fecha} (7 días)")
+
+    def mostrar_entradas_mes(self, tipo_mov=None):
+        self._clear_input_frame()
+        titulo = "Consulta Mensual"
+        if tipo_mov == 'E': titulo = "Entradas del Mes"
+        elif tipo_mov == 'S': titulo = "Salidas del Mes"
+
+        self.input_title.configure(text=titulo)
+        self.tipo_mov_mes = tipo_mov
+
+        ctk.CTkLabel(self.input_content, text="Mes (1-12):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_mes_digito = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_mes_digito.grid(row=0, column=1, padx=10, pady=10)
+        self.entrada_mes_digito.bind("<Return>", lambda event: self.ejecutar_mes())
+
+        ctk.CTkButton(self.input_content, text="Consultar Mes", command=self.ejecutar_mes).grid(row=1, column=0, columnspan=2, pady=20)
+
+    def ejecutar_mes(self):
+        mes_str = self.entrada_mes_digito.get()
+        if not mes_str:
+            messagebox.showwarning("Entrada Inválida", "Por favor, ingrese el dígito del mes.")
+            return
+        try:
+            mes = int(mes_str)
+            if not 1 <= mes <= 12: raise ValueError()
+        except ValueError:
+            messagebox.showwarning("Entrada Inválida", "El mes debe ser un número entre 1 y 12.")
+            return
+
+        self.limpiar_area_resultados()
+        resultados = self._manejar_llamada_bd(fn_mime.obtener_detalles_movimientos_mes, mes, self.tipo_mov_mes)
+
+        self._clear_input_frame()
+        tipo_str = "Movimientos"
+        if self.tipo_mov_mes == 'E': tipo_str = "Entradas"
+        elif self.tipo_mov_mes == 'S': tipo_str = "Salidas"
+
+        self.mostrar_resultados_paginados(resultados, f"{tipo_str} del Mes {mes}")
+
     def mostrar_resultados_paginados(self, resultados, titulo, page_size=10):
         self.limpiar_area_resultados()
-        self.input_frame.config(text=titulo) # Reutilizamos el input_frame para mostrar el título
+        self.input_title.configure(text=titulo) # Reutilizamos el título para mostrar el título de resultados
 
         if not resultados:
             self._mostrar_resultados_texto(f"No se encontraron resultados.")
@@ -281,17 +378,17 @@ class InventarioApp:
         self.total_pages = (len(self.resultados) + self.page_size - 1) // self.page_size
 
         # Frame para los controles de paginación
-        pagination_controls = ttk.Frame(self.input_frame)
-        pagination_controls.pack(pady=5)
+        pagination_controls = ctk.CTkFrame(self.input_content, fg_color="transparent")
+        pagination_controls.pack(pady=10)
 
-        self.prev_button = ttk.Button(pagination_controls, text="<< Anterior", command=self.prev_page)
-        self.prev_button.pack(side=tk.LEFT, padx=5)
+        self.prev_button = ctk.CTkButton(pagination_controls, text="<< Anterior", command=self.prev_page, width=100)
+        self.prev_button.pack(side=tk.LEFT, padx=10)
 
-        self.page_label = ttk.Label(pagination_controls, text=f"Página {self.current_page + 1} de {self.total_pages}")
-        self.page_label.pack(side=tk.LEFT, padx=5)
+        self.page_label = ctk.CTkLabel(pagination_controls, text=f"Página {self.current_page + 1} de {self.total_pages}")
+        self.page_label.pack(side=tk.LEFT, padx=10)
 
-        self.next_button = ttk.Button(pagination_controls, text="Siguiente >>", command=self.next_page)
-        self.next_button.pack(side=tk.LEFT, padx=5)
+        self.next_button = ctk.CTkButton(pagination_controls, text="Siguiente >>", command=self.next_page, width=100)
+        self.next_button.pack(side=tk.LEFT, padx=10)
 
         self.show_page()
 
@@ -316,9 +413,9 @@ class InventarioApp:
         self._mostrar_resultados_texto(texto_resultado)
 
         # Actualizar estado de los botones
-        self.page_label.config(text=f"Página {self.current_page + 1} de {self.total_pages}")
-        self.prev_button.config(state=tk.NORMAL if self.current_page > 0 else tk.DISABLED)
-        self.next_button.config(state=tk.NORMAL if self.current_page < self.total_pages - 1 else tk.DISABLED)
+        self.page_label.configure(text=f"Página {self.current_page + 1} de {self.total_pages}")
+        self.prev_button.configure(state=tk.NORMAL if self.current_page > 0 else tk.DISABLED)
+        self.next_button.configure(state=tk.NORMAL if self.current_page < self.total_pages - 1 else tk.DISABLED)
 
     def prev_page(self):
         if self.current_page > 0:
@@ -332,17 +429,20 @@ class InventarioApp:
 
     def mostrar_entradas_op7(self):
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="Nombre del Producto:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op7_nombre = ttk.Entry(self.input_frame, width=40)
-        self.entrada_op7_nombre.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Stock por Nombre de Producto")
+        ctk.CTkLabel(self.input_content, text="Nombre del Producto:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op7_nombre = ctk.CTkEntry(self.input_content, width=300)
+        self.entrada_op7_nombre.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op7_nombre.bind("<KeyRelease>", self.actualizar_sugerencias_productos)
 
-        self.sugerencias_listbox = tk.Listbox(self.input_frame, width=40, height=5, selectbackground="#cce5ff")
-        self.sugerencias_listbox.grid(row=1, column=1, padx=5, pady=2, sticky="w")
+        # Listbox sigue siendo tk.Listbox porque ctk no tiene uno nativo similar
+        self.sugerencias_listbox = tk.Listbox(self.input_content, width=50, height=5, selectbackground="#3b8ed0",
+                                             bg="#2b2b2b", fg="white", borderwidth=0, highlightthickness=1)
+        self.sugerencias_listbox.grid(row=1, column=1, padx=10, pady=2, sticky="w")
         self.sugerencias_listbox.bind("<<ListboxSelect>>", self.seleccionar_sugerencia_producto)
         self.sugerencias_listbox.bind("<Motion>", self.resaltar_sugerencia)
 
-        ttk.Button(self.input_frame, text="Buscar Stock", command=self.ejecutar_op7).grid(row=2, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Buscar Stock", command=self.ejecutar_op7).grid(row=2, column=0, columnspan=2, pady=20)
         self.producto_seleccionado = None
 
     def actualizar_sugerencias_productos(self, event):
@@ -403,22 +503,23 @@ class InventarioApp:
 
     def mostrar_entradas_op8(self):
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="ID Producto:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op8_id = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op8_id.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Añadir Nuevo Producto")
+        ctk.CTkLabel(self.input_content, text="ID Producto:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op8_id = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op8_id.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op8_id.bind("<Return>", lambda event: self.ejecutar_op8())
 
-        ttk.Label(self.input_frame, text="Nombre:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op8_nombre = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op8_nombre.grid(row=1, column=1, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="Nombre:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op8_nombre = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op8_nombre.grid(row=1, column=1, padx=10, pady=10)
         self.entrada_op8_nombre.bind("<Return>", lambda event: self.ejecutar_op8())
 
-        ttk.Label(self.input_frame, text="Peso:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op8_peso = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op8_peso.grid(row=2, column=1, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="Peso:").grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op8_peso = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op8_peso.grid(row=2, column=1, padx=10, pady=10)
         self.entrada_op8_peso.bind("<Return>", lambda event: self.ejecutar_op8())
 
-        ttk.Button(self.input_frame, text="Añadir", command=self.ejecutar_op8).grid(row=3, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Añadir Producto", command=self.ejecutar_op8).grid(row=3, column=0, columnspan=2, pady=20)
 
     def ejecutar_op8(self):
         id_prod = self.entrada_op8_id.get()
@@ -441,11 +542,12 @@ class InventarioApp:
 
     def mostrar_entradas_op9(self):
         self._clear_input_frame()
-        ttk.Label(self.input_frame, text="ID Producto a Eliminar:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entrada_op9_id = ttk.Entry(self.input_frame, width=30)
-        self.entrada_op9_id.grid(row=0, column=1, padx=5, pady=5)
+        self.input_title.configure(text="Eliminar Producto")
+        ctk.CTkLabel(self.input_content, text="ID Producto a Eliminar:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entrada_op9_id = ctk.CTkEntry(self.input_content, width=200)
+        self.entrada_op9_id.grid(row=0, column=1, padx=10, pady=10)
         self.entrada_op9_id.bind("<Return>", lambda event: self.ejecutar_op9())
-        ttk.Button(self.input_frame, text="Eliminar", command=self.ejecutar_op9).grid(row=1, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self.input_content, text="Eliminar", command=self.ejecutar_op9, fg_color="#d32f2f", hover_color="#b71c1c").grid(row=1, column=0, columnspan=2, pady=20)
 
     def ejecutar_op9(self):
         id_prod = self.entrada_op9_id.get()
@@ -466,44 +568,45 @@ class InventarioApp:
 
     def mostrar_entradas_op10(self):
         self._clear_input_frame()
+        self.input_title.configure(text="Insertar Múltiples Movimientos")
         self.movimientos_entries = []
 
         # Fecha unificada para todos los movimientos
-        ttk.Label(self.input_frame, text="Fecha para todos los movimientos (YYYY-MM-DD):").grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
-        self.fecha_multi_mov = ttk.Entry(self.input_frame, width=30)
-        self.fecha_multi_mov.grid(row=0, column=2, columnspan=2, padx=5, pady=5)
+        ctk.CTkLabel(self.input_content, text="Fecha (YYYY-MM-DD):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.fecha_multi_mov = ctk.CTkEntry(self.input_content, width=200)
+        self.fecha_multi_mov.grid(row=0, column=1, padx=10, pady=10)
 
         # Frame para las filas de movimientos
-        self.movimientos_frame = ttk.Frame(self.input_frame)
-        self.movimientos_frame.grid(row=1, column=0, columnspan=5, pady=10)
+        self.movimientos_frame = ctk.CTkScrollableFrame(self.input_content, height=200)
+        self.movimientos_frame.grid(row=1, column=0, columnspan=2, pady=10, sticky="nsew")
 
         # Botones de control
-        controles_frame = ttk.Frame(self.input_frame)
-        controles_frame.grid(row=2, column=0, columnspan=5)
-        ttk.Button(controles_frame, text="Añadir Movimiento", command=self.añadir_fila_movimiento).pack(side=tk.LEFT, padx=5)
-        ttk.Button(controles_frame, text="Guardar Todo", command=self.ejecutar_op10).pack(side=tk.LEFT, padx=5)
+        controles_frame = ctk.CTkFrame(self.input_content, fg_color="transparent")
+        controles_frame.grid(row=2, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(controles_frame, text="Añadir Fila", command=self.añadir_fila_movimiento, width=120).pack(side=tk.LEFT, padx=5)
+        ctk.CTkButton(controles_frame, text="Guardar Todo", command=self.ejecutar_op10, width=120).pack(side=tk.LEFT, padx=5)
 
         self.añadir_fila_movimiento() # Añadir la primera fila por defecto
 
     def añadir_fila_movimiento(self):
-        row_index = len(self.movimientos_entries)
-        fila_frame = ttk.Frame(self.movimientos_frame)
-        fila_frame.pack(pady=2, fill=tk.X)
+        fila_frame = ctk.CTkFrame(self.movimientos_frame)
+        fila_frame.pack(pady=5, fill=tk.X, padx=5)
 
         # Widgets para una fila de movimiento
-        ttk.Label(fila_frame, text="Tipo (E/S):").pack(side=tk.LEFT, padx=5)
-        tipo_mov = ttk.Combobox(fila_frame, values=["E", "S"], width=5)
+        ctk.CTkLabel(fila_frame, text="Tipo:").pack(side=tk.LEFT, padx=5)
+        tipo_mov = ctk.CTkComboBox(fila_frame, values=["E", "S"], width=70)
         tipo_mov.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(fila_frame, text="ID Producto:").pack(side=tk.LEFT, padx=5)
-        id_prod = ttk.Entry(fila_frame, width=15)
+        ctk.CTkLabel(fila_frame, text="ID:").pack(side=tk.LEFT, padx=5)
+        id_prod = ctk.CTkEntry(fila_frame, width=100)
         id_prod.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(fila_frame, text="Cantidad:").pack(side=tk.LEFT, padx=5)
-        cantidad = ttk.Entry(fila_frame, width=10)
+        ctk.CTkLabel(fila_frame, text="Cant:").pack(side=tk.LEFT, padx=5)
+        cantidad = ctk.CTkEntry(fila_frame, width=80)
         cantidad.pack(side=tk.LEFT, padx=5)
 
-        btn_eliminar = ttk.Button(fila_frame, text="X", width=3, command=lambda f=fila_frame: self.eliminar_fila_movimiento(f))
+        btn_eliminar = ctk.CTkButton(fila_frame, text="X", width=30, fg_color="#d32f2f", hover_color="#b71c1c",
+                                   command=lambda f=fila_frame: self.eliminar_fila_movimiento(f))
         btn_eliminar.pack(side=tk.RIGHT, padx=5)
 
         # Guardar las entradas para poder leer sus valores después
@@ -594,6 +697,12 @@ class InventarioApp:
         consultas_menu.add_command(label="Detalles de Entradas en un Día", command=self.mostrar_entradas_op3)
         consultas_menu.add_command(label="Detalles de Salidas en un Día", command=self.mostrar_entradas_op4)
         consultas_menu.add_command(label="Todos los Movimientos en un Día", command=self.mostrar_entradas_op6)
+        consultas_menu.add_separator()
+        consultas_menu.add_command(label="Entradas Semanales (7 días)", command=lambda: self.mostrar_entradas_semana('E'))
+        consultas_menu.add_command(label="Salidas Semanales (7 días)", command=lambda: self.mostrar_entradas_semana('S'))
+        consultas_menu.add_separator()
+        consultas_menu.add_command(label="Entradas Mensuales", command=lambda: self.mostrar_entradas_mes('E'))
+        consultas_menu.add_command(label="Salidas Mensuales", command=lambda: self.mostrar_entradas_mes('S'))
 
     def exportar_stock_excel(self):
         """
@@ -638,6 +747,7 @@ class InventarioApp:
 
 if __name__ == "__main__":
     try:
+        # Intento de conexión simplificado para el test
         conn_test = fn_mime.mysql.connector.connect(
             host=fn_mime.DB_HOST,
             user=fn_mime.DB_USER,
@@ -647,7 +757,7 @@ if __name__ == "__main__":
         )
         conn_test.close()
 
-        app_root = tk.Tk()
+        app_root = ctk.CTk()
         app = InventarioApp(app_root)
         app_root.mainloop()
 
