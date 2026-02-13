@@ -233,3 +233,51 @@ def buscar_producto_por_nombre(search_term: str) -> List[Tuple[Any, ...]]:
     if resultados:
         return resultados
     return []
+
+def obtener_detalles_movimientos_rango(fecha_inicio: str, dias: int, tipo_mov: Optional[str] = None) -> List[Tuple[Any, ...]]:
+    """
+    Obtiene detalles de movimientos en un rango de días desde una fecha de inicio.
+    """
+    if tipo_mov:
+        query = """
+        SELECT p.producto, m.tipo_mov, m.id_prod, m.cantidad
+        FROM movimiento m
+        JOIN producto p ON m.id_prod = p.id_prod
+        WHERE m.tipo_mov = %s AND m.fecha_mov BETWEEN %s AND DATE_ADD(%s, INTERVAL %s DAY);
+        """
+        params = (tipo_mov, fecha_inicio, fecha_inicio, dias)
+    else:
+        query = """
+        SELECT p.producto, m.tipo_mov, m.id_prod, m.cantidad
+        FROM movimiento m
+        JOIN producto p ON m.id_prod = p.id_prod
+        WHERE m.fecha_mov BETWEEN %s AND DATE_ADD(%s, INTERVAL %s DAY);
+        """
+        params = (fecha_inicio, fecha_inicio, dias)
+
+    resultados = ejecutar_query(query, params)
+    return resultados if resultados else []
+
+def obtener_detalles_movimientos_mes(mes: int, tipo_mov: Optional[str] = None) -> List[Tuple[Any, ...]]:
+    """
+    Obtiene detalles de movimientos para un mes específico (del año actual por defecto, o simplemente por dígito de mes).
+    """
+    if tipo_mov:
+        query = """
+        SELECT p.producto, m.tipo_mov, m.id_prod, m.cantidad
+        FROM movimiento m
+        JOIN producto p ON m.id_prod = p.id_prod
+        WHERE m.tipo_mov = %s AND MONTH(m.fecha_mov) = %s;
+        """
+        params = (tipo_mov, mes)
+    else:
+        query = """
+        SELECT p.producto, m.tipo_mov, m.id_prod, m.cantidad
+        FROM movimiento m
+        JOIN producto p ON m.id_prod = p.id_prod
+        WHERE MONTH(m.fecha_mov) = %s;
+        """
+        params = (mes,)
+
+    resultados = ejecutar_query(query, params)
+    return resultados if resultados else []
