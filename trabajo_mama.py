@@ -233,3 +233,52 @@ def buscar_producto_por_nombre(search_term: str) -> List[Tuple[Any, ...]]:
     if resultados:
         return resultados
     return []
+def obtener_movimientos_proximos_7_dias(tipo_mov: str, fecha_inicio: str) -> List[Tuple[Any, ...]]:
+    """
+    Obtiene el total de cantidades por producto para los siguientes 7 días a partir de una fecha.
+    """
+    query = """
+    SELECT p.producto, SUM(m.cantidad)
+    FROM movimiento m
+    JOIN producto p ON m.id_prod = p.id_prod
+    WHERE m.tipo_mov = %s AND m.fecha_mov BETWEEN %s AND DATE_ADD(%s, INTERVAL 6 DAY)
+    GROUP BY p.producto
+    ORDER BY p.producto;
+    """
+    resultados = ejecutar_query(query, (tipo_mov, fecha_inicio, fecha_inicio))
+    if resultados:
+        return resultados
+    return []
+
+def obtener_movimientos_mes_concreto(tipo_mov: str, mes: int) -> List[Tuple[Any, ...]]:
+    """
+    Obtiene el total de cantidades por producto que coincidan con el dígito del mes.
+    """
+    query = """
+    SELECT p.producto, SUM(m.cantidad)
+    FROM movimiento m
+    JOIN producto p ON m.id_prod = p.id_prod
+    WHERE m.tipo_mov = %s AND MONTH(m.fecha_mov) = %s
+    GROUP BY p.producto
+    ORDER BY p.producto;
+    """
+    resultados = ejecutar_query(query, (tipo_mov, mes))
+    if resultados:
+        return resultados
+    return []
+
+def obtener_total_movimientos_por_nombre(tipo_mov: str, search_term: str) -> int:
+    """
+    Obtiene el total de cantidades de productos en conjunto que coincidan con el término de búsqueda.
+    """
+    query = """
+    SELECT SUM(m.cantidad)
+    FROM movimiento m
+    JOIN producto p ON m.id_prod = p.id_prod
+    WHERE m.tipo_mov = %s AND p.producto LIKE %s;
+    """
+    # Añadimos los comodines '%' para la búsqueda LIKE
+    resultados = ejecutar_query(query, (tipo_mov, f"%{search_term}%"))
+    if resultados and resultados[0] and resultados[0][0] is not None:
+        return int(resultados[0][0])
+    return 0
